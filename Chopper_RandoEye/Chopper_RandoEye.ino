@@ -1,8 +1,4 @@
 #include "Arduino.h"
-// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
-// Released under the GPLv3 license to match the rest of the
-// Adafruit NeoPixel library
-
 #include <Adafruit_NeoPixel.h>
 #include <NeoPatterns.h>
 
@@ -11,24 +7,34 @@
 #endif
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define PIN        6 // On Trinket or Gemma, suggest changing this to 1
-#define PIN_NEOPIXEL  7 //Ladder
-
-//#define LADDERPIN 7// pin for Ladder LEDs
+#define EYEPIN        6 // On Trinket or Gemma, suggest changing this to 1
+#define LADDERPIN  7 //Ladder
 
 // How many NeoPixels are attached to the Arduino?
-#define NUMPIXELS 8 // Popular NeoPixel ring size
-#define LADDERNUM 7//NUmber of Ladder LEDs
+#define EYENUM 8 // Popular NeoPixel ring size
+#define LADDERNUM 7//Number of Ladder LEDs
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
 // strips you might need to change the third parameter -- see the
 // strandtest example for more information on possible values.
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);//Chopper's Eyes
-//Adafruit_NeoPixel ladder(LADDERNUM, LADDERPIN, NEO_GRB + NEO_KHZ800);//Ladder
+Adafruit_NeoPixel pixels(EYENUM, EYEPIN, NEO_GRB + NEO_KHZ800);//Chopper's Eyes
+
+
+//unsigned long currentMillis = millis();//current time
+//unsigned long doRandoMillis;//time to do the random thing.
+//unsigned long flickAAAtime;//Eyeflicker timer
+//boolean isFlickColorA = true;//Set the first oclor true so we can toggle
 
 // onComplete callback functions
-void MultiPatterns(NeoPatterns *aLedsPtr);
+void EyePatterns(NeoPatterns *aLedsPtr);
+void TwoPatterns(NeoPatterns *aLedsPtr);
+
+
+
+// construct the NeoPatterns instances
+NeoPatterns neoEye = NeoPatterns(EYENUM, EYEPIN, NEO_GRB + NEO_KHZ800, &EyePatterns);
+NeoPatterns ladder = NeoPatterns(LADDERNUM, LADDERPIN, NEO_GRB + NEO_KHZ800, &TwoPatterns);
 
 /////Declarations
 int RandoEyeVal();//Find a random eye to manipulate
@@ -36,6 +42,7 @@ void standardEyeLights(); //Steady state eye lighting
 void randomEyeLights(); //Rando eye animations
 void flickAAA(int flickB, int flickG, int flickR);//Flicker Routine
 void powerGlitch(int flickB, int flickG, int flickR); //Power glitch animation
+//void MultiPatterns(NeoPatterns *aLedsPtr);//NeoPatterns handler
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
@@ -47,13 +54,72 @@ void setup() {
 #endif
   // END of Trinket-specific code.
   Serial.begin(115200);
+  // Just to know which program is running on my Arduino
+  Serial.println(F("START " __FILE__ " from " __DATE__ "\r\nUsing library version " VERSION_NEOPATTERNS));
+
+
+
+
+  //ladder.begin(); // This sets the pin.
+  neoEye.begin();
+  ladder.begin();
 
   //Initial Colors
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  pixels.setPixelColor(1, pixels.Color(90, 90, 0));
-  pixels.setPixelColor(4, pixels.Color(0, 50, 255));
-  pixels.setPixelColor(7, pixels.Color(0, 50, 255));
-  pixels.show();
+//  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+//  pixels.setPixelColor(1, pixels.Color(90, 90, 0));
+//  pixels.setPixelColor(4, pixels.Color(0, 50, 255));
+//  pixels.setPixelColor(7, pixels.Color(0, 50, 255));
+//  pixels.show();
+
+  neoEye.setPixelColor(1, pixels.Color(90, 90, 0));
+  neoEye.setPixelColor(4, pixels.Color(0, 50, 255));
+  neoEye.setPixelColor(7, pixels.Color(0, 50, 255));
+  neoEye.show();
+
+
+
+  /*
+   * First pattern ColorWipe
+   */
+  Serial.println("ColorWipe");
+  ladder.ColorWipe(COLOR32(0, 0, 4), 50, REVERSE); // light Blue
+  ladder.updateAndWaitForPatternToStop();
+  delay(500);
+
+  /*
+   * Second pattern - RainbowCycle
+   */
+  Serial.println("RainbowCycle");
+  ladder.RainbowCycle(10);
+  ladder.updateAndWaitForPatternToStop();
+  delay(500);
+
+  /*
+   * Third pattern - rocket
+   */
+  Serial.println("Rocket");
+  ladder.ScannerExtended(COLOR32_WHITE_HALF, 7, 20, 0, FLAG_SCANNER_EXT_VANISH_COMPLETE);
+  ladder.updateAndWaitForPatternToStop();
+  delay(500);
+
+  /*
+   * Now trigger the automatic patterns
+   */
+  TwoPatterns(&ladder);
+  TwoPatterns(&neoEye);
+
+  Serial.println("started");
+  randomSeed(1234);
+
+  //NeoPixelBar24.begin(); // This sets the output pin.
+
+  /*
+     * Start the patterns
+     */
+    //LowerNeoPixelBar.ColorWipe(COLOR32_GREEN_QUARTER, 80);
+    //MiddleNeoPixelBar.ScannerExtended(COLOR32_BLUE_HALF, 2, 60, 2, FLAG_SCANNER_EXT_ROCKET | FLAG_SCANNER_EXT_START_AT_BOTH_ENDS);
+    //UpperNeoPixelBar.ColorWipe(COLOR32_RED_QUARTER, 80, 0, DIRECTION_DOWN);
+    Serial.println(F("Started"));
 
   //Ladder Setup
 //  ladder.begin(); //setup ladder
@@ -68,22 +134,40 @@ void setup() {
 }
 
 void loop() {
-  //pixels.clear(); // Set all pixel colors to 'off'
+
 
   // The first NeoPixel in a strand is #0, second is 1, all the way up
   // to the count of pixels minus one.
-  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+//  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+//
+//    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+//    // Here we're using a moderately bright green color:
+//    //pixels.setPixelColor(i, pixels.Color(0, 255, 200));
+//
+//    //pixels.show();   // Send the updated pixel colors to the hardware.
+//    standardEyeLights();
+//    int randoTime = random(1000);
+//    doRandoMillis = ((DELAYVAL+randoTime)*3) + millis();
+//    Serial.print("doRandomMillis: ");
+//    Serial.println(doRandoMillis);
+//    currentMillis = millis();
+//    if (currentMillis>doRandoMillis){
+//
+//      currentMillis = millis();
+//    }
+//      else{
+//        randomEyeLights();
+//        //randoMillis = currentMillis();
+//    }
+//   // delay((DELAYVAL+randoTime)*3); // Pause before next pass through loop
+//
+//  }
+  //NeoPatterns Area
+  ladder.update();
+  neoEye.update();
+  //Serial.println("Updated ladder:");
+  delay(10);
 
-    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-    // Here we're using a moderately bright green color:
-    //pixels.setPixelColor(i, pixels.Color(0, 255, 200));
-
-    //pixels.show();   // Send the updated pixel colors to the hardware.
-    standardEyeLights();
-    int randoTime = random(1000);
-    delay((DELAYVAL+randoTime)*3); // Pause before next pass through loop
-    randomEyeLights();
-  }
 }
 
 void standardEyeLights(){
@@ -152,7 +236,7 @@ void randomEyeLights(){
     }
 
   pixels.show();
-  delay(randoDelay); // Pause before next pass through loop
+  //delay(randoDelay); // Pause before next pass through loop
   }
 
 }
@@ -160,22 +244,11 @@ void randomEyeLights(){
 void flickAAA(int flickB, int flickG, int flickR)
 {
   // Flicker Chosen Light
-          int randoEye = random(0,3);
+        int randoEye = random(0,3);
         int eyeToJitter = RandoEyeVal();// 4;// randoEye;
         Serial.print ("RandoEye: ");
         Serial.println(randoEye);
 
-//        switch (randoEye){
-//          case 0:
-//            eyeToJitter = 1;
-//            break;
-//          case 1:
-//            eyeToJitter = 4;
-//            break;
-//          case 2:
-//            eyeToJitter = 7;
-//            break;
-//        }
         int flickTimes = random(7, 22);
 
         for(int i=0; i<flickTimes; i++){
@@ -224,4 +297,160 @@ int RandoEyeVal(){
       break;
   }
 
+}
+
+/*
+ * Simple handler for switching between 2 patterns
+ */
+void TwoPatterns(NeoPatterns *aLedsPtr) {
+    //static int8_t sState = 7;
+    static int8_t repeat = random(4,11);
+    static int8_t pattCount = (8+1);//number of cases +1
+    static int8_t sState = random(0,pattCount);
+
+#if defined(__AVR__)
+    uint32_t tRandom = random();
+#else
+    uint32_t tRandom = random(__UINT32_MAX__);
+#endif
+    uint8_t tDuration = random(100,300);//random(20, 120);
+    uint8_t tColor1 = tRandom;
+    uint8_t tColor2 = tRandom >> 8;
+
+    switch (sState) {
+    case 0:
+        // Scanner - use random mode and direction
+
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 3, tDuration, repeat,
+                (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
+                        | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
+        sState = random(0,pattCount);
+        break;
+
+    case 1:
+        // Stripes - use random direction
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor1), 5, NeoPatterns::Wheel(tColor2), 3, 2 * aLedsPtr->numPixels(), tDuration,
+                (tRandom & DIRECTION_DOWN));
+        sState = random(0,pattCount);
+        break;
+    case 2:
+        aLedsPtr->ColorWipe(COLOR32_WHITE_HALF, 50);
+        sState = random(0,pattCount);
+        break;
+    case 3:
+        aLedsPtr->Heartbeat(COLOR32_GREEN, 50, repeat);
+        sState = random(0,pattCount);
+        break;
+    case 4:
+        aLedsPtr->RainbowCycle(50, DIRECTION_UP);
+        sState = random(0,pattCount);
+        break;
+    case 5:
+        aLedsPtr->RainbowCycle(50, DIRECTION_DOWN);
+        sState = random(0,pattCount);
+        break;
+    case 6:
+        aLedsPtr->Fire(20, 40, DIRECTION_UP); // OK Fire(30, 260)is also OK
+        sState = random(0,pattCount);
+        break;
+     case 7:
+        aLedsPtr->ScannerExtended(COLOR32_GREEN, 2, tDuration, 15,
+         FLAG_SCANNER_EXT_CYLON , ((tRandom >> 8) & DIRECTION_DOWN));
+        sState = random(0,pattCount);
+        break;
+    case 8:
+        /*
+         * Non blocking delay implemented as pattern :-)
+         */
+        aLedsPtr->Delay(500);
+        sState = random(0,pattCount);
+        break;
+
+    default:
+        sState = random(0,pattCount);
+        Serial.println("ERROR");
+        break;
+    }
+
+    Serial.print(" ActiveLadderPattern=");
+    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+    Serial.print("|");
+    Serial.print(aLedsPtr->ActivePattern);
+    Serial.println();
+
+    //sState++;
+}
+
+void EyePatterns(NeoPatterns *aLedsPtr) {
+    //static int8_t sState = 0;
+    static int8_t sState = random(0,3);
+#if defined(__AVR__)
+    uint32_t tRandom = random();
+#else
+    uint32_t tRandom = random(__UINT32_MAX__);
+#endif
+    uint8_t tDuration = random(20, 120);
+    uint8_t tColor1 = tRandom;
+    uint8_t tColor2 = tRandom >> 8;
+
+    int randoTime = random(1000);
+
+    switch (sState) {
+    case 0:
+        // Scanner - use random mode and direction
+
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 2,
+                (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
+                        | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
+        sState = random(0,4);
+        break;
+
+    case 1:
+        // Stripes - use random direction
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor1), 5, NeoPatterns::Wheel(tColor2), 3, 2 * aLedsPtr->numPixels(), tDuration,
+                (tRandom & DIRECTION_DOWN));
+        sState = random(0,4);
+        break;
+
+    case 2:
+          //Standard Eye Colors;
+          aLedsPtr->setPixelColor(0, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(1, aLedsPtr->Color(90, 90, 0));//Active
+          aLedsPtr->setPixelColor(2, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(3, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(4, aLedsPtr->Color(0, 50, 255));//Active
+          aLedsPtr->setPixelColor(5, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(6, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(7, aLedsPtr->Color(0, 50, 255));//Active
+          aLedsPtr->setPixelColor(8, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->show();
+          aLedsPtr->Delay((DELAYVAL+randoTime)*3);
+          sState = random(0,4);
+          break;
+
+    case 3:
+        /*
+         * Non blocking delay implemented as pattern :-)
+         */
+         //aLedsPtr->clear();
+        aLedsPtr->Delay(1000);
+        sState = random(0,4);// go steady//-1; // Start from beginning
+        break;
+
+    default:
+        sState =2;
+        Serial.println("ERROR");
+        break;
+    }
+
+//    Serial.print(" ActiveEyePattern=");
+//    aLedsPtr->printPatternName(aLedsPtr->ActivePattern, &Serial);
+//    Serial.print("|");
+//    Serial.print(aLedsPtr->ActivePattern);
+//    Serial.print("sState: ");
+//    Serial.print (sState);
+//    Serial.println();
+
+
+//sState++;
 }
