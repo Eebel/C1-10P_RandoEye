@@ -1,3 +1,8 @@
+//Random Eye and LED Ladder patterns for CHopper's Dome
+//Uses NeoPatterns
+//Hacked by Eebel 18 April 2021
+//work in progress
+
 #include "Arduino.h"
 #include <Adafruit_NeoPixel.h>
 #include <NeoPatterns.h>
@@ -399,7 +404,7 @@ void EyePatterns(NeoPatterns *aLedsPtr) {
     case 0:
         // Scanner - use random mode and direction
 
-        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 2,
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 1,
                 (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
                         | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
         sState = random(0,4);
