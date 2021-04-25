@@ -52,7 +52,7 @@ environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.MCU/oper
 environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.MCU/value=atmega328p
 environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PATH/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PATH/operation=replace
-environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PATH/value=C\:\\Users\\timhe\\Documents\\sloeber-workspace\\Chopper_RandoEye\\Release
+environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PATH/value=C\:\\Users\\timhe\\git\\C1-10P_RandoEye\\Chopper_RandoEye\\Release
 environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PROJECT_NAME/delimiter=;
 environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PROJECT_NAME/operation=replace
 environment/project/io.sloeber.core.toolChain.release.904285083/A.BUILD.PROJECT_NAME/value=${ProjName}
