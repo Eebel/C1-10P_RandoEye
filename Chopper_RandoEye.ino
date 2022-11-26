@@ -1,5 +1,5 @@
 //Random Eye and LED Ladder patterns for Chopper's Dome
-//Uses NeoPatterns
+//Uses NeoPatterns 2.3.1
 //Hacked by Eebel 3 Dec 2021
 //work in progress
 //This attempts to have three separate and independent NeoPattern processes going at once.
