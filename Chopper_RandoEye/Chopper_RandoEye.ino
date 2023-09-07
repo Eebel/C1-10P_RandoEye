@@ -5,7 +5,7 @@
 
 #include "Arduino.h"
 #include <Adafruit_NeoPixel.h>
-#include <NeoPatterns.hpp>
+#include "NeoPatterns.hpp"
 
 //#ifdef __AVR__
 // #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
