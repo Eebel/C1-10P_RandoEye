@@ -1,12 +1,12 @@
 //Random Eye and LED Ladder patterns for Chopper's Dome
-//Uses NeoPatterns 2.3.1
-//Hacked by Eebel 3 Dec 2021
+//Uses NeoPatterns
+//Hacked by Eebel 18 April 2021
 //work in progress
-//This attempts to have three separate and independent NeoPattern processes going at once.
+//Updated sketh to use NeoPatterns 3.1.1 on 7 Sep 2023
 
 #include "Arduino.h"
 #include <Adafruit_NeoPixel.h>
-#include <NeoPatterns.h>
+#include "NeoPatterns.hpp"
 
 //#ifdef __AVR__
 // #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
@@ -15,12 +15,12 @@
 #define LEDPAD //uncomment if using three NeoPixal Pads instead of an LED strip
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define EYEPIN     7 //7 // Arduino pin to attach the Eyes
-#define LADDERPIN  6 //Arduino pin to attach the LED Ladder
-#define PERISCOPEPIN 5 //5 //Arduino pin to attach the NEOPIXEL in the Periscope
-
+#define EYEPIN        6 // Arduino pin to attach the Eyes
+#define LADDERPIN  7 //Arduino pin to attach the LED Ladder
 
 // How many NeoPixels are attached to the Eyes?
+
+
 #ifdef LEDPAD
 	int EYENUM = 3;
 	int eyeOne = 0;
@@ -37,7 +37,7 @@
 
 
 
-#define LADDERNUM 16//7//Number of Ladder LEDs
+#define LADDERNUM  16//16//7//Number of Ladder LEDs
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
@@ -48,26 +48,21 @@
 
 // onComplete callback functions
 void EyePatterns(NeoPatterns *aLedsPtr);
-void LadderPatterns(NeoPatterns *aLedsPtr);
-void PeriscopePatterns (NeoPatterns *LedsPtr);
-
+void TwoPatterns(NeoPatterns *aLedsPtr);
 
 
 
 // construct the NeoPatterns instances
 NeoPatterns neoEye = NeoPatterns(EYENUM, EYEPIN, NEO_GRB + NEO_KHZ800, &EyePatterns);
-NeoPatterns ladder = NeoPatterns(LADDERNUM, LADDERPIN, NEO_GRB + NEO_KHZ800, &LadderPatterns);
-NeoPatterns periscope = NeoPatterns(2, PERISCOPEPIN, NEO_GRB + NEO_KHZ800, &PeriscopePatterns);
-
+NeoPatterns ladder = NeoPatterns(LADDERNUM, LADDERPIN, NEO_GRB + NEO_KHZ800, &TwoPatterns);
 
 /////Declarations
-//int RandoEyeVal();//Find a random eye to manipulate
-//void standardEyeLights(); //Steady state eye lighting
-//void randomEyeLights(); //Rando eye animations
-//void flickAAA(int flickB, int flickG, int flickR);//Flicker Routine
-//void powerGlitch(int flickB, int flickG, int flickR); //Power glitch animation
-//void PeriscopePatterns();//flickering lights for the Periscope NeoPixel LED
-
+int RandoEyeVal();//Find a random eye to manipulate
+void standardEyeLights(); //Steady state eye lighting
+void randomEyeLights(); //Rando eye animations
+void flickAAA(int flickB, int flickG, int flickR);//Flicker Routine
+void powerGlitch(int flickB, int flickG, int flickR); //Power glitch animation
+//void MultiPatterns(NeoPatterns *aLedsPtr);//NeoPatterns handler
 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
@@ -88,13 +83,17 @@ void setup() {
   //ladder.begin(); // This sets the pin.
   neoEye.begin();
   ladder.begin();
-  periscope.begin();
-
 
   //Initial Colors
-  neoEye.setPixelColor(eyeOne, 90, 90, 0);//yellow
-  neoEye.setPixelColor(eyeTwo, 0, 50, 255);//blue
-  neoEye.setPixelColor(eyeThree, 0, 50, 255);//blue
+//  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+//  pixels.setPixelColor(1, pixels.Color(90, 90, 0));
+//  pixels.setPixelColor(4, pixels.Color(0, 50, 255));
+//  pixels.setPixelColor(7, pixels.Color(0, 50, 255));
+//  pixels.show();
+
+  neoEye.setPixelColor(eyeOne, 90, 90, 0);
+  neoEye.setPixelColor(eyeTwo, 0, 50, 255);
+  neoEye.setPixelColor(eyeThree, 0, 50, 255);
   neoEye.show();
 
 
@@ -104,7 +103,7 @@ void setup() {
    */
   Serial.println("ColorWipe");
   //ladder.ColorWipe(COLOR32(0, 0, 4), 50, REVERSE); // light Blue
-  ladder.ColorWipe(COLOR32_WHITE_HALF,50,REVERSE);
+  ladder.ColorWipe(COLOR32_WHITE_HALF,50);
   ladder.updateAndWaitForPatternToStop();
   delay(100);
 
@@ -127,9 +126,8 @@ void setup() {
   /*
    * Now trigger the automatic patterns
    */
-  LadderPatterns(&ladder);
+  TwoPatterns(&ladder);
   EyePatterns(&neoEye);
-  PeriscopePatterns(&periscope);
 
   Serial.println("started");
   randomSeed(1234);
@@ -150,8 +148,6 @@ void loop() {
   //NeoPatterns Area
   ladder.update();
   neoEye.update();
-  periscope.update();
-
   //Serial.println("Updated ladder:");
   delay(10);
 
@@ -229,7 +225,7 @@ void standardEyeLights(){
 /*
  * Simple handler for switching between 2 patterns
  */
-void LadderPatterns(NeoPatterns *aLedsPtr) {
+void TwoPatterns(NeoPatterns *aLedsPtr) {
     //static int8_t sState = 7;
     static int8_t repeat = random(4,11);
     static int8_t pattCount = (8+1);//number of cases +1
@@ -322,8 +318,8 @@ void LadderPatterns(NeoPatterns *aLedsPtr) {
 }
 
 void EyePatterns(NeoPatterns *aLedsPtr) {
-    //static int8_t sState = 3;
-    static int8_t sState = random(0,2);//Random long int from 0 to 1
+    //static int8_t sState = 0;
+    static int8_t sState = random(0,3);
 //#if defined(__AVR__)
 //    uint32_t tRandom = random();
 //#else
@@ -332,73 +328,63 @@ void EyePatterns(NeoPatterns *aLedsPtr) {
     uint8_t tDuration = random(20, 120);
     uint8_t tColor1 = tRandom;
     uint8_t tColor2 = tRandom >> 8;
-	uint8_t rRedColor = random(255);
-	uint8_t rBlueColor = random(255);
-	uint8_t rGreenColor = random(255);
 
     int randoTime = random(1000);
 
     switch (sState) {
     case 0:
-        //Standard Eye Colors;
-		#ifdef LEDPAD
-      aLedsPtr->setPixelColor(eyeOne, aLedsPtr->Color(90, 190, 0));
-      aLedsPtr->setPixelColor(eyeTwo, aLedsPtr->Color(0, 50, 255));
-      aLedsPtr->setPixelColor(eyeThree, aLedsPtr->Color(0, 50, 255));
+        // Scanner - use random mode and direction
 
-		#else
-        aLedsPtr->setPixelColor(0, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(1, aLedsPtr->Color(90, 90, 0));//Active
-        aLedsPtr->setPixelColor(2, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(3, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(4, aLedsPtr->Color(0, 50, 255));//Active
-        aLedsPtr->setPixelColor(5, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(6, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(7, aLedsPtr->Color(0, 50, 255));//Active
-        aLedsPtr->setPixelColor(8, aLedsPtr->Color(0, 0, 0));
-		#endif
-        aLedsPtr->show();
-        aLedsPtr->Delay((DELAYVAL+randoTime)*3);
-        sState = random(0,3);
-        if (sState>1){sState=0;}
+        aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 1,
+                (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
+                        | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
+
+
+    	sState = random(1,4);
         break;
 
     case 1:
-        /*
-         * Non blocking delay implemented as pattern :-)
+        // Stripes - use random direction
+        aLedsPtr->Stripes(NeoPatterns::Wheel(tColor1), 5, NeoPatterns::Wheel(tColor2), 3, 2 * aLedsPtr->numPixels(), tDuration,
+                (tRandom & DIRECTION_DOWN));
+        sState = random(2,4);
+        break;
 
-         //aLedsPtr->clear();
-    	//Currently, this delay should never happen.   Eyes, were blanking out.
-        aLedsPtr->Delay(1000);
-        sState = random(0,3);// go steady//-1; // Start from beginning
-        break;*/
-        //Random Eye Colors;
+    case 2:
+          //Standard Eye Colors;
 		#ifdef LEDPAD
-
-
-      aLedsPtr->setPixelColor(eyeOne, aLedsPtr->Color(rRedColor, rBlueColor, rGreenColor));
-      aLedsPtr->setPixelColor(eyeTwo, aLedsPtr->Color(rGreenColor, rRedColor, rBlueColor));
-      aLedsPtr->setPixelColor(eyeThree, aLedsPtr->Color(rBlueColor, rGreenColor, rRedColor));
+        aLedsPtr->setPixelColor(eyeOne, aLedsPtr->Color(90, 190, 0));
+        aLedsPtr->setPixelColor(eyeTwo, aLedsPtr->Color(0, 50, 255));
+        aLedsPtr->setPixelColor(eyeThree, aLedsPtr->Color(0, 50, 255));
 
 		#else
-        aLedsPtr->setPixelColor(0, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(1, aLedsPtr->Color(90, 90, 0));//Active
-        aLedsPtr->setPixelColor(2, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(3, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(4, aLedsPtr->Color(0, 50, 255));//Active
-        aLedsPtr->setPixelColor(5, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(6, aLedsPtr->Color(0, 0, 0));
-        aLedsPtr->setPixelColor(7, aLedsPtr->Color(0, 50, 255));//Active
-        aLedsPtr->setPixelColor(8, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(0, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(1, aLedsPtr->Color(90, 90, 0));//Active
+          aLedsPtr->setPixelColor(2, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(3, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(4, aLedsPtr->Color(0, 50, 255));//Active
+          aLedsPtr->setPixelColor(5, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(6, aLedsPtr->Color(0, 0, 0));
+          aLedsPtr->setPixelColor(7, aLedsPtr->Color(0, 50, 255));//Active
+          aLedsPtr->setPixelColor(8, aLedsPtr->Color(0, 0, 0));
 		#endif
-        aLedsPtr->show();
-        aLedsPtr->Delay((DELAYVAL+randoTime)*.5);
-        sState = random(0,2);
-        if (sState>1){sState=0;}
+          aLedsPtr->show();
+          aLedsPtr->Delay((DELAYVAL+randoTime)*3);
+          sState = random(0,4);
+          break;
+
+
+    case 3:
+        /*
+         * Non blocking delay implemented as pattern :-)
+         */
+         //aLedsPtr->clear();
+        aLedsPtr->Delay(1000);
+        sState = random(0,4);// go steady//-1; // Start from beginning
         break;
 
     default:
-        sState =0;
+        sState =2;
         Serial.println("ERROR");
         break;
     }
@@ -413,32 +399,4 @@ void EyePatterns(NeoPatterns *aLedsPtr) {
 
 
 //sState++;
-}
-
-/*
- * Handle some interesting color sweeps and flashing for the periscope
- */
-void PeriscopePatterns(NeoPatterns *aLedsPtr){
-
-
-    uint32_t tRandom = random(__UINT32_MAX__);
-
-    uint8_t tDuration = random(20, 120);
-    uint8_t tColor1 = tRandom;
-    uint8_t tColor2 = tRandom >> 8;
-
-    //int randoTime = random(1000);
-
-    // Scanner - use random mode and direction
-
-    aLedsPtr->RainbowCycle(1, DIRECTION_UP);
-    //aLedsPtr->show();
-    //aLedsPtr->setPixelColor(1, aLedsPtr->Color(0, 50, 255));
-
-    /*
-    aLedsPtr->ScannerExtended(NeoPatterns::Wheel(tColor1), 4, tDuration, 1,
-            (tRandom & FLAG_SCANNER_EXT_CYLON) | (tRandom & FLAG_SCANNER_EXT_VANISH_COMPLETE)
-                    | (tRandom & FLAG_SCANNER_EXT_START_AT_BOTH_ENDS), ((tRandom >> 8) & DIRECTION_DOWN));
-*/
-
 }
