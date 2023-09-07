@@ -2,6 +2,7 @@
 //Uses NeoPatterns
 //Hacked by Eebel 18 April 2021
 //work in progress
+//Updated sketh to use NeoPatterns 3.1.1 on 7 Sep 2023
 
 #include "Arduino.h"
 #include <Adafruit_NeoPixel.h>
@@ -102,7 +103,7 @@ void setup() {
    */
   Serial.println("ColorWipe");
   //ladder.ColorWipe(COLOR32(0, 0, 4), 50, REVERSE); // light Blue
-  ladder.ColorWipe(COLOR32_WHITE_HALF,50,REVERSE);
+  ladder.ColorWipe(COLOR32_WHITE_HALF,50);
   ladder.updateAndWaitForPatternToStop();
   delay(100);
 
